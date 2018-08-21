@@ -497,7 +497,6 @@ def activityResponse(response, data) {
 	} else {
 		if (response.status == 200) {
 			log.trace "Harmony - Command sent succesfully"
-			poll()
 		} else {
 			log.trace "Harmony - Command failed. Error: $response.status"
 		}
@@ -522,11 +521,25 @@ def poll() {
 def pollResponse(response, data) {
 	if (response.hasError()) {
 		log.error "Harmony - response has error: $response.errorMessage"
+		def activities = getChildDevices()
+		// Device-Watch relies on the Logitech Harmony Cloud to get the Device state.
+		activities.each { activity ->
+			if ("${activity.deviceNetworkId}".contains("harmony-${it.key}")) {
+				activity.sendEvent(name: "DeviceWatch-DeviceStatus", value: "offline", displayed: false, isStateChange: true)
+			}
+		}
 		if (response.status == 401) { // token is expired
 			state.remove("HarmonyAccessToken")
 			log.warn "Harmony - Access token has expired"
 		}
 	} else {
+		// Device-Watch relies on the Logitech Harmony Cloud to get the Device state
+		def activities = getChildDevices()
+		activities.each { activity ->
+			if ("${activity.deviceNetworkId}".contains("harmony-${it.key}")) {
+				activity.sendEvent(name: "DeviceWatch-DeviceStatus", value: "online", displayed: false, isStateChange: true)
+			}
+		}
 		def ResponseValues
 		def currentActivities = []
 		try {
@@ -537,15 +550,7 @@ def pollResponse(response, data) {
 		}
 		if (ResponseValues) {
 			log.debug "Harmony - response body: $response.data"
-			def activities = getChildDevices()
 			ResponseValues.hubs.each {
-				// Device-Watch relies on the Logitech Harmony Cloud to get the Device state.
-				def isAlive = it.value.status
-				activities.each { activity ->
-					if ("${activity.deviceNetworkId}".contains("harmony-${it.key}")) {
-						activity.sendEvent(name: "DeviceWatch-DeviceStatus", value: isAlive!=504? "online":"offline", displayed: false, isStateChange: true)
-					}
-				}
 				if (it.value.message == "OK") {
 					def hub = getChildDevice("harmony-${it.key}")
 					if (hub) {

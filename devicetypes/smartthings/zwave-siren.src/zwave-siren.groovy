@@ -31,8 +31,8 @@ metadata {
 		fingerprint mfr: "0258", prod: "0003", model: "0088", deviceJoinName: "NEO Coolcam Siren Alarm"
 		fingerprint mfr: "021F", prod: "0003", model: "0088", deviceJoinName: "Dome Siren"
 		fingerprint mfr: "0060", prod: "000C", model: "0001", deviceJoinName: "Utilitech Siren"
-		//zw:F type:1005 mfr:0258 prod:0003 model:1088 ver:2.94 zwv:4.38 lib:06 cc:5E,86,72,5A,73,70,85,59,25,71,87,80 role:07 ff:8F00 ui:8F00
-		fingerprint mfr: "0258", prod: "0003", model: "1088", deviceJoinName: "Zipato Siren Alarm"
+		//zw:F type:1005 mfr:0131 prod:0003 model:1083 ver:2.17 zwv:6.02 lib:06 cc:5E,9F,55,73,86,85,8E,59,72,5A,25,71,87,70,80,6C role:07 ff:8F00 ui:8F00
+		fingerprint mfr: "0131", prod: "0003", model: "1083", deviceJoinName: "Zipato Siren Alarm"
 	}
 
 	simulator {
@@ -115,7 +115,7 @@ def initialize() {
 def configure() {
 	log.debug "config"
 	def cmds = []
-	if (zwaveInfo.mfr == "0258" && zwaveInfo.model == "1088") {
+	if (zwaveInfo.mfr == "0131" && zwaveInfo.model == "1083") {
 		// Set alarm volume to 2 (medium)
 		cmds << zwave.configurationV1.configurationSet(parameterNumber: 1, size: 1, configurationValue: [2]).format()
 		cmds << "delay 500"
@@ -123,7 +123,7 @@ def configure() {
 		cmds << zwave.configurationV1.configurationSet(parameterNumber: 2, size: 1, configurationValue: [2]).format()
 		cmds << "delay 500"
 		// Set alarm sound to no.1
-		cmds << zwave.configurationV1.configurationSet(parameterNumber: 5, size: 1, configurationValue: [1]).format()
+		cmds << zwave.configurationV1.configurationSet(parameterNumber: 5, size: 1, configurationValue: [9]).format()
 	}
 	response(cmds)
 }
@@ -142,7 +142,7 @@ def on() {
 	// Those alarms do not end with Siren Notification Report.
 	// For those cases we add additional state check after alarm duration to
 	// synchronize cloud state with actual device state.
-	if (zwaveInfo.mfr == "0258" && zwaveInfo.model == "1088") {
+	if (zwaveInfo.mfr == "0131" && zwaveInfo.model == "1083") {
 		[
 			zwave.basicV1.basicSet(value: 0xFF).format(),
 			zwave.basicV1.basicGet().format(),
